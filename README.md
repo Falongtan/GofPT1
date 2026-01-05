@@ -27,7 +27,7 @@ You can install the development version of GofPT1 like so:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("tsnm1/GofPT1")
+devtools::install_github("Falongtan/GofPT1") 
 ```
 
 ## Functions Overview
