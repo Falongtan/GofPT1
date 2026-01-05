@@ -9,12 +9,12 @@
 
 This R package implements the methodologies developed in the following two works:
 
-* **A Two-Step Projection-Based Goodness-of-Fit Test for Ultra-High Dimensional Sparse Regressions**: 
+* **A Two-Step Projection-Based Goodness-of-Fit Test for Ultra-High Dimensional Sparse Regressions [1]**: 
 This paper proposes a two-step strategy that first constructs multiple test statistics based on projected predictors from distinct projections to mitigate the dimensionality problem. 
 The second step employs p-value combination methods (e.g., the minimum p-value and the Fisher combination) to form the final test statistics. 
 This projection-based approach significantly mitigates the Curse of Dimensionality problem, enabling the tests to detect local alternatives converging to the null at the rate as if the predictor were univariate.
 
-* **Asymptotic Distribution-Free Tests for Ultra-high Dimensional Parametric Regressions via Projected Empirical Processes and p-value Combination**:
+* **Asymptotic Distribution-Free Tests for Ultra-high Dimensional Parametric Regressions via Projected Empirical Processes and p-value Combination [2]**:
 This paper constructs a Cramer-von Mises type test based on a martingale-transformed, 
 projected residual-marked empirical process, which renders the test asymptotically distribution-free. 
 Furthermore, it proposes a novel hybrid test that aggregates empirical process-based and local smoothing tests using Cauchy combination, 
@@ -37,11 +37,11 @@ devtools::install_github("Falongtan/GofPT1")
 ## Functions Overview
 
 - **Gof_CPB_test(X, Y, fam, penalize)**: A Two-Step Projection-Based
-  Goodness-of-Fit Test for Ultra-High Dimensional Sparse Regressions
+  Goodness-of-Fit Test for Ultra-High Dimensional Sparse Regressions [1]
 
 - **Gof_Pcvm_test(x, y, family)**: Asymptotic Distribution-Free Tests for
   Ultra-high Dimensional Parametric Regressions via Projected Empirical
-  Processes and p-value Combination
+  Processes and p-value Combination [2]
 
 ## Example
 
