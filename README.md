@@ -136,7 +136,7 @@ output26 <- Gof_Pcvm_test(x, y, fam = "binomial")
 
 ## Examples from empirical section of [1] and [2]
 
-The source codes for the simulation studies and real data analyses corresponding to [1] and [2] are available in [[local submit code](https://github.com/Falongtan/Gof_CPB_test/tree/main/local%20submit%20code)] and [[global submit code](https://github.com/Falongtan/Gof_CPB_test/tree/main/global%20submit%20code)], respectively.
+The source codes for the simulation studies and real data analyses corresponding to [1] and [2] are available in [[local submit code](https://github.com/Falongtan/Gof_CPB-Pcvm_test/tree/main/local%20submit%20code)] and [[global submit code](https://github.com/Falongtan/Gof_CPB-Pcvm_test/tree/main/global%20submit%20code)], respectively.
 
 ## References
 
