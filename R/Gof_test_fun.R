@@ -11,10 +11,11 @@ library(caret)
 #' where the predictor dimension far exceeds the sample size. It first constructs multiple test statistics based on projected predictors from distinct projections and
 #' second employs powerful $p$-value combination procedures, such as the minimum $p$-value and the Fisher combination of $p$-value,
 #' to form our final tests and enhance power.
-#' @param X Input matrix with \code{n} rows, each a \code{p}-dimensional observation vector.
-#' @param Y Response vector.
-#' @param fam Family type for GLM Models fitting. Must be "gaussian", "binomial" or "poisson".
+#' @param x Input matrix with \code{n} rows, each a \code{p}-dimensional observation vector.
+#' @param y Response vector.
+#' @param family Family type for GLM Models fitting. Must be "gaussian", "binomial" or "poisson".
 #' @param penalize \code{TRUE} if penalization should be used in glmnet function when fitting the GLM models (see Details below).
+#' @param c_h A numeric constant for bandwidth scaling. Default is 1.
 #' #' @details
 #'   This function tests if the conditional mean of \code{y} given \code{X} could be
 #'   originating from a GLM family specified by the user via \code{fam}.
@@ -30,6 +31,7 @@ library(caret)
 #'
 #' @examples
 #' # Simulation example  H11
+#' library(MASS)
 #' set.seed(123)
 #' n <- 300
 #' p <- 50
@@ -42,18 +44,19 @@ library(caret)
 #'
 #' a <- 0
 #' y <- x %*% beta0 + a * 0.1 * (x %*% beta0)^2 + rnorm(n)
-#' output11 <- Gof_CPB_test(x, y, family = "gaussian")
+#' output11 <- Gof_PLS_test(x, y, family = "gaussian")
 #' a <- 1
 #' y <- x %*% beta0 + a * 0.1 * (x %*% beta0)^2 + rnorm(n)
-#' output13 <- Gof_CPB_test(x, y, family = "gaussian")
+#' output13 <- Gof_PLS_test(x, y, family = "gaussian")
 #'
 #' # Real data analysis
 #' dim(data_crime)
 #' y <- data_crime[, 100]
 #' x <- data_crime[, -100]
-#' output15 <- Gof_CPB_test(x, y, family = "gaussian")
+#' output15 <- Gof_PLS_test(x, y, family = "gaussian")
 #'
 #' # Simulation example # H21
+#' library(MASS)
 #' set.seed(123)
 #' n <- 300
 #' p <- 50
@@ -68,21 +71,21 @@ library(caret)
 #' z <- x %*% beta0 + a * 0.2 * (x %*% beta0)^2
 #' pr <- 1 / (1 + exp(-z))
 #' y <- matrix(rbinom(n, 1, pr), ncol = 1)
-#' output21 <- Gof_CPB_test(x, y, family = "binomial")
+#' output21 <- Gof_PLS_test(x, y, family = "binomial")
 #' a <- 1
 #' z <- x %*% beta0 + a * 0.2 * (x %*% beta0)^2
 #' pr <- 1 / (1 + exp(-z))
 #' y <- matrix(rbinom(n, 1, pr), ncol = 1)
-#' output23 <- Gof_CPB_test(x, y, family = "binomial")
+#' output23 <- Gof_PLS_test(x, y, family = "binomial")
 #'
 #' # Real data analysis
 #' dim(data_AML)
 #' y <- data_AML$ELN_binary
 #' x <- data_AML[, 1:(ncol(data_AML) - 2)]
 #' x <- x[, -which(is.na(apply(data_AML, 2, sum)))]
-#' output25 <- Gof_CPB_test(x, y, family = "binomial")
+#' output25 <- Gof_PLS_test(x, y, family = "binomial")
 #'
-Gof_CPB_test <- function(x, y, family = c("gaussian", "binomial", "poisson"),
+Gof_PLS_test <- function(x, y, family = c("gaussian", "binomial", "poisson"),
                          penalize = TRUE, c_h = 1) {
   family <- match.arg(family)
 
@@ -155,9 +158,11 @@ Gof_CPB_test <- function(x, y, family = c("gaussian", "binomial", "poisson"),
 #'
 #' @description This function constructs a Cramer-von Mises type test based on a martingale-transformed,
 #' projected residual-marked empirical process. Furthermore, it proposes a novel hybrid test that aggregates empirical process-based tests and local smoothing tests using Cauchy combination.
-#' @param X Input matrix with \code{n} rows, each a \code{p}-dimensional observation vector.
-#' @param Y Response vector.
-#' @param fam Family type for GLM model fitting. Must be "gaussian" or "binomial".
+#' @param x Input matrix with \code{n} rows, each a \code{p}-dimensional observation vector.
+#' @param y Response vector.
+#' @param family Family type for GLM model fitting. Must be "gaussian" or "binomial".
+#' @importFrom stats binomial coef cor gaussian glm pcauchy pchisq plogis pnorm predict
+#' @importFrom glmnet cv.glmnet
 #'
 #' @return A list containing various aggregated p-values, where \code{pval_cauchy_hybrid} is the
 #' primary result representing the combination of both Martingale and PLS tests.
@@ -166,6 +171,7 @@ Gof_CPB_test <- function(x, y, family = c("gaussian", "binomial", "poisson"),
 #'
 #' @examples
 #' # Simulation example # H11
+#' library(MASS)
 #' set.seed(123)
 #' n <- 300
 #' p <- 50
@@ -190,6 +196,7 @@ Gof_CPB_test <- function(x, y, family = c("gaussian", "binomial", "poisson"),
 #' output16 <- Gof_Pcvm_test(x, y, family = "gaussian")
 #'
 #' # Simulation example  # H21
+#' library(MASS)
 #' set.seed(123)
 #' n <- 300
 #' p <- 50
@@ -228,6 +235,8 @@ Gof_Pcvm_test <- function(x, y, family = c("gaussian", "binomial")) {
   # penalize=NULL triggers the Hybrid logic (Caret, GLM/Lasso switch)
   # return(list(U = as.matrix(U1), beta_pro = matrix(beta1_pro, ncol = 1),
   #             beta_hat = beta1_hat, intercept = intercept1, deri_link = deri))
+  # est1 <- get_residuals_and_beta(split$x1, split$y1, family, penalize = T)
+  # est2 <- get_residuals_and_beta(split$x2, split$y2, family, penalize = T)
   est1 <- get_residuals_and_beta(split$x1, split$y1, family, penalize = T)
   est2 <- get_residuals_and_beta(split$x2, split$y2, family, penalize = T)
 
@@ -267,3 +276,5 @@ Gof_Pcvm_test <- function(x, y, family = c("gaussian", "binomial")) {
   )
   return(result)
 }
+
+

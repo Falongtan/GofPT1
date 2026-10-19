@@ -7,11 +7,11 @@
 Gof_Pcvm_test(x, y, family = c("gaussian", "binomial"))
 }
 \arguments{
-\item{X}{Input matrix with \code{n} rows, each a \code{p}-dimensional observation vector.}
+\item{x}{Input matrix with \code{n} rows, each a \code{p}-dimensional observation vector.}
 
-\item{Y}{Response vector.}
+\item{y}{Response vector.}
 
-\item{fam}{Family type for GLM model fitting. Must be "gaussian" or "binomial".}
+\item{family}{Family type for GLM model fitting. Must be "gaussian" or "binomial".}
 }
 \value{
 A list containing various aggregated p-values, where \code{pval_cauchy_hybrid} is the
@@ -23,6 +23,7 @@ projected residual-marked empirical process. Furthermore, it proposes a novel hy
 }
 \examples{
 # Simulation example # H11
+library(MASS)
 set.seed(123)
 n <- 300
 p <- 50
@@ -47,6 +48,7 @@ x <- data_crime[, -100]
 output16 <- Gof_Pcvm_test(x, y, family = "gaussian")
 
 # Simulation example  # H21
+library(MASS)
 set.seed(123)
 n <- 300
 p <- 50

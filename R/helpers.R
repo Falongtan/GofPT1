@@ -10,8 +10,7 @@ split_data <- function(X, Y) {
 }
 
 # --- 3.2 Estimation Function (Crucial: Handles CPB vs Hybrid Logic) ---
-get_residuals_and_beta <- function(x, y, family = c("gaussian", "binomial"),
-                                   penalize = NULL) {
+get_residuals_and_beta <- function(x, y, family = c("gaussian", "binomial"), penalize = NULL) {
   family <- match.arg(family)
   x <- as.matrix(x)
   y <- as.numeric(y)
@@ -19,7 +18,7 @@ get_residuals_and_beta <- function(x, y, family = c("gaussian", "binomial"),
   p <- ncol(x)
 
   if (is.null(penalize)) {
-    penalize <- (p >= n - 1)
+    penalize <- (p > n/log(n)/2)
   }
 
   if (isTRUE(penalize)) {
@@ -52,11 +51,11 @@ get_residuals_and_beta <- function(x, y, family = c("gaussian", "binomial"),
 
 
         if (any(is.na(sec_beta1))) {
-          library(caret)
+          # library(caret)
           lasso_beta1 <- coef(lasso_model1, s = "lambda.min")[-1]
 
           cor_matrix <- cor(x1_sec, use = "pairwise.complete.obs")
-          high_cor_vars <- findCorrelation(cor_matrix, cutoff = 0.9, verbose = TRUE)
+          high_cor_vars <- caret::findCorrelation(cor_matrix, cutoff = 0.9, verbose = TRUE)
           index_beta1_non0 <- index_beta1_non0[-high_cor_vars]
           x1_sec <- x[, index_beta1_non0]
 
@@ -128,8 +127,7 @@ get_sdr_projections <- function(x, y_list, family, methods = c("local", "global"
     {
       U <- y_list$U
       if (p <= screen_num) {
-        fit <- LassoSIR::LassoSIR(x, U,
-          H = 10, choosing.d = "automatic",
+        fit <- LassoSIR::LassoSIR(x, U, H = 10, choosing.d = "automatic",
           solution.path = FALSE, categorical = FALSE,
           nfolds = 5, screening = FALSE
         )
@@ -139,8 +137,7 @@ get_sdr_projections <- function(x, y_list, family, methods = c("local", "global"
         # Screening for U always uses DC-SIS
         rank_U <- VariableScreening::screenIID(X = x, Y = U, method = "DC-SIS")
         idx_U <- seq(1:p)[rank_U$rank <= screen_num]
-        fit <- LassoSIR::LassoSIR(x[, idx_U, drop = FALSE], U,
-          H = 10, choosing.d = "automatic",
+        fit <- LassoSIR::LassoSIR(x[, idx_U, drop = FALSE], U, H = 10, choosing.d = "automatic",
           solution.path = FALSE, categorical = FALSE,
           nfolds = 5, screening = FALSE
         )
@@ -214,13 +211,38 @@ calc_martingale_pvals <- function(x_source, est, sir_pro_target, beta_pro_target
   sir_pro <- sir_pro_target
   beta_pro <- beta_pro_target
 
+  pro1 <- cbind(beta_pro, sir_pro)
+  pro1_orth <- matrix(numeric(0), nrow = nrow(pro1), ncol = 0)
+  tol <- 1e-12
+  deleted1 <- integer(0)
+  kept1 <- integer(0)
+
+  for (jj in seq_len(ncol(pro1))) {
+    v1 <- pro1[, jj]
+    if (ncol(pro1_orth) > 0) {
+      for (ii in seq_len(ncol(pro1_orth))) {
+        v1 <- v1 - sum(v1 * pro1_orth[, ii]) * pro1_orth[, ii]
+      }
+    }
+    v1_norm <- sqrt(sum(v1^2))
+    if (!is.finite(v1_norm) || v1_norm < tol) {
+      deleted1 <- c(deleted1, jj)
+      next
+    }
+    pro1_orth <- cbind(pro1_orth, v1 / v1_norm)
+    kept1 <- c(kept1, jj)
+  }
+  # beta_pro_orth <- pro1_orth[, 1, drop = FALSE]
+  sir_Upro_orth <- pro1_orth[, -1, drop = FALSE]
+
   # --- Branch A: Gaussian Case (Linear) ---
   if (family == "gaussian") {
-    all_pro <- cbind(sir_pro, beta_pro)
+    # all_pro <- cbind(sir_pro, beta_pro)
+    all_pro <- pro1_orth
     n_pro <- ncol(all_pro)
     pvals <- numeric(n_pro)
 
-    for (q in 1:n_pro) {
+    for (q in seq_len(n_pro)) {
       x_pro <- x_source %*% all_pro[, q]
       x_Indictor <- ifelse(x_pro %*% rep(1, n) <= rep(1, n) %*% t(x_pro), 1, 0)
 
@@ -249,13 +271,14 @@ calc_martingale_pvals <- function(x_source, est, sir_pro_target, beta_pro_target
 
   # --- Branch B: Binomial Case (Logit) ---
   else {
-    n_sir <- ncol(sir_pro)
+    # n_sir <- ncol(sir_pro)
+    n_sir <- ncol(sir_Upro_orth)
     pvals <- numeric(n_sir + 1)
     deri_link <- est$deri # Expected to be p*(1-p)
 
     # 1. Loop for sir_Upro (Non-parametric 3x3 Branch)
-    for (q in 1:n_sir) {
-      x_pro <- x_source %*% sir_pro[, q]
+    for (q in seq_len(n_sir)) {
+      x_pro <- x_source %*% sir_Upro_orth[, q]
       band_y <- cbind(U^2, deri_link, (x_source %*% est$beta_hat) * deri_link)
       h <- bandwidth_choice(x_pro, band_y)
 
@@ -317,14 +340,29 @@ calc_martingale_pvals <- function(x_source, est, sir_pro_target, beta_pro_target
     pvals[n_sir + 1] <- pvalue_integ_Brown(PCvM_beta)
   }
 
+
+
   return(pvals)
 }
 
 # --- 3.5 PLS Test Statistics ---
-calc_pls_pvals <- function(x_source, U, sir_pro_target, beta_pro_target, h) {
+calc_pls_pvals <- function(x_source, U, sir_Upro_target, sir_ypro_target, h) {
   # --- Step 1: Matrix Construction (Matching original logic) ---
   # Combine SDR directions and Beta direction into a single projection set
-  pro_pls <- cbind(sir_pro_target, beta_pro_target)
+  pro_pls <- cbind(sir_Upro_target, sir_ypro_target)
+  ###To ensure that the projections are linearly independent
+  pro_pls <- tryCatch({
+    qr_obj <- qr(pro_pls)
+    if( qr_obj$rank == ncol(pro_pls) ){
+      pro_pls
+    }else{
+      pivot <- qr_obj$pivot[1:qr_obj$rank]
+      pro_pls[, pivot, drop = FALSE]
+    }
+  }, error =function(e){
+    NA })
+  pro_pls <- as.matrix(pro_pls)
+
 
   # Clean NA columns as per tryCatch logic in original snippets
   pro_pls <- pro_pls[, !apply(pro_pls, 2, function(v) any(is.na(v))), drop = FALSE]
@@ -387,30 +425,34 @@ combine_pvals <- function(p) {
 }
 
 # --- 3.7 The choice for the bandwidth for martingale-based test ---
-bandwidth_choice <- function(x, y_mat) {
-  n <- length(x)
+bandwidth_choice <- function(x, y_mat){
+  n <- nrow(x)
   p <- ncol(x)
-  c_h <- seq(0.25, 1.25, 0.15)
+  c_h <- seq(0.25, 3, 0.25)
   len_h <- length(c_h)
-  h <- c_h * n^(-2 / 9)
-  CV <- rep(0, len_h)
+  h <- c_h*n^(-1/5)
+  CV <- rep(0,len_h)                                                          # martingale with beta0 and alpha as projections
 
   for (i in 1:len_h) {
-    Ker_inter <- (x %*% rep(1, n) - rep(1, n) %*% t(x)) / h[i] # kernel function matrix
-    # kernel <- exp(-0.5*Ker_inter^2)                                          # Gaussian kernel
+    Ker_inter <- (x %*% rep(1,n) - rep(1,n) %*% t(x))/h[i]                    # kernel function matrix
+    #kernel <- exp(-0.5*Ker_inter^2)                                          # Gaussian kernel
 
     Ker_indictor <- ifelse(abs(Ker_inter) <= 1, 1, 0)
-    kernel <- (3 / 4) * (1 - Ker_inter^2) * Ker_indictor
+    kernel <- (3/4)*(1-Ker_inter^2)*Ker_indictor
 
-    diag(kernel) <- rep(0, n)
+    Lii <- diag(kernel) / (rowSums(kernel) + n^(-12))                         # denom <- pmax(1 - Lii, 1e-8)
+    denom <- pmax(1 - Lii, 1e-8)
 
-    R1 <- mean((y_mat[, 1] - (kernel %*% y_mat[, 1]) / (rowSums(kernel) + n^(-12)))^2)
-    R2 <- mean((y_mat[, 2] - (kernel %*% y_mat[, 2]) / (rowSums(kernel) + n^(-12)))^2)
-    R3 <- mean((y_mat[, 3] - (kernel %*% y_mat[, 3]) / (rowSums(kernel) + n^(-12)))^2)
-    CV[i] <- R1 + R2 + R3
+    R1 <- mean(((y_mat[,1] - (kernel%*%y_mat[,1])/(rowSums(kernel) + n^(-12))) / denom)^2)
+    R2 <- mean(((y_mat[,2] - (kernel%*%y_mat[,2])/(rowSums(kernel) + n^(-12))) / denom)^2)
+    R3 <- mean(((y_mat[,3] - (kernel%*%y_mat[,3])/(rowSums(kernel) + n^(-12))) / denom)^2)
+    CV[i] <- R1+R2+R3
   }
   index <- which.min(CV)
-  h0 <- c_h[index] * n^(-2 / 9) # The bandwidth for the martingale with beta1 and alpha as projections
+  if (length(index) == 0) {
+    return(NA_real_)
+  }
+  h0 <- c_h[index] * n^(-1/5)              # The bandwidth for the martingale with beta1 and alpha as projections
   return(c(h0))
 }
 
