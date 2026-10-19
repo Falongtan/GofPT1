@@ -9,16 +9,20 @@
 
 This R package implements the methodologies developed in the following two works:
 
-* **A Two-Step Projection-Based Goodness-of-Fit Test for Ultra-High Dimensional Sparse Regressions**: 
+* **A Two-Step Projection-Based Goodness-of-Fit Test for Ultra-High Dimensional Sparse Regressions [1]**: 
 This paper proposes a two-step strategy that first constructs multiple test statistics based on projected predictors from distinct projections to mitigate the dimensionality problem. 
 The second step employs p-value combination methods (e.g., the minimum p-value and the Fisher combination) to form the final test statistics. 
-This projection-based approach significantly mitigates the dimensionality problem, enabling the tests to detect local alternatives converging to the null at the rate as if the predictor were univariate.
+This projection-based approach significantly mitigates the Curse of Dimensionality problem, enabling the tests to detect local alternatives converging to the null at the rate as if the predictor were univariate.
 
-* **Asymptotic Distribution-Free Tests for Ultra-high Dimensional Parametric Regressions via Projected Empirical Processes and p-value Combination**:
+* **Asymptotic Distribution-Free Tests for Ultra-high Dimensional Parametric Regressions via Projected Empirical Processes and p-value Combination [2]**:
 This paper constructs a Cramer-von Mises type test based on a martingale-transformed, 
 projected residual-marked empirical process, which renders the test asymptotically distribution-free. 
 Furthermore, it proposes a novel hybrid test that aggregates empirical process-based and local smoothing tests using Cauchy combination, 
 which is powerful against both low-frequency and high-frequency alternatives.
+
+
+ 
+
 
 
 ## Installation
@@ -27,17 +31,17 @@ You can install the development version of GofPT1 like so:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("tsnm1/GofPT1")
+devtools::install_github("Falongtan/GofPT1") 
 ```
 
 ## Functions Overview
 
 - **Gof_CPB_test(X, Y, fam, penalize)**: A Two-Step Projection-Based
-  Goodness-of-Fit Test for Ultra-High Dimensional Sparse Regressions
+  Goodness-of-Fit Test for Ultra-High Dimensional Sparse Regressions [1]
 
 - **Gof_Pcvm_test(x, y, family)**: Asymptotic Distribution-Free Tests for
   Ultra-high Dimensional Parametric Regressions via Projected Empirical
-  Processes and p-value Combination
+  Processes and p-value Combination [2]
 
 ## Example
 
@@ -129,6 +133,10 @@ x <- x[,-which(is.na(apply(data_AML,2,sum)))]
 output25 <- Gof_CPB_test(x, y, fam = "binomial")
 output26 <- Gof_Pcvm_test(x, y, fam = "binomial")
 ```
+
+## Examples from empirical section of [1] and [2]
+
+The source codes for the simulation studies and real data analyses corresponding to [1] and [2] are available in [[Code_PLS_test](https://github.com/Falongtan/Code_PLS_test)] and [[Code_Pcvm_test](https://github.com/Falongtan/Code_Pcvm_test)], respectively.
 
 ## References
 
