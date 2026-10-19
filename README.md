@@ -103,7 +103,7 @@ Here, we apply the tests to binary response variables.
 # Simulation example 
 # Similar to the linear case, we simulate data under both the null hypothesis (standard logistic model) and the alternative hypothesis (logistic model with quadratic terms).
 set.seed(123)
-n <- 300; p <- 50; pho <- 0.4
+n <- 600; p <- 50; pho <- 0.4
 mu <- rep(0, p);v <- pho^(0:(p-1))
 sigma <- toeplitz(v)
 x <- mvrnorm(n, mu, sigma)
