@@ -50,7 +50,7 @@ output16 <- Gof_Pcvm_test(x, y, family = "gaussian")
 # Simulation example  # H21
 library(MASS)
 set.seed(123)
-n <- 300
+n <- 600
 p <- 50
 pho <- 0.4
 mu <- rep(0, p)

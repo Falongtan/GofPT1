@@ -58,7 +58,7 @@ library(caret)
 #' # Simulation example # H21
 #' library(MASS)
 #' set.seed(123)
-#' n <- 300
+#' n <- 600
 #' p <- 50
 #' pho <- 0.4
 #' mu <- rep(0, p)
@@ -198,7 +198,7 @@ Gof_PLS_test <- function(x, y, family = c("gaussian", "binomial", "poisson"),
 #' # Simulation example  # H21
 #' library(MASS)
 #' set.seed(123)
-#' n <- 300
+#' n <- 600
 #' p <- 50
 #' pho <- 0.4
 #' mu <- rep(0, p)
