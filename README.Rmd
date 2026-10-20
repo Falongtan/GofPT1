@@ -88,7 +88,7 @@ output16 <- Gof_Pcvm_test(x, y, fam = "gaussian")
 ```{r,warning = FALSE}
 # Simulation example
 set.seed(123)
-n <- 300
+n <- 600
 p <- 50
 pho <- 0.4
 mu <- rep(0, p)
