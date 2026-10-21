@@ -130,6 +130,10 @@ output25 <- Gof_PLS_test(x, y, fam = "binomial")
 output26 <- Gof_Pcvm_test(x, y, fam = "binomial")
 ```
 
+## Examples from empirical section of [1] and [2]
+
+The source codes for the simulation studies and real data analyses corresponding to [1] and [2] are available in [[Code_PLS_test](https://github.com/Falongtan/Code_PLS_test)] and [[Code_Pcvm_test](https://github.com/Falongtan/Code_Pcvm_test)], respectively.
+
 ## References
 
 [1] [TAN F, LIU J, PENG H, ZHU L. A Two-Step Projection-Based Goodness-of-Fit Test for Ultra-High Dimensional Sparse Regressions[EB/OL]. 2025. arXiv:2412.10721..](https://arxiv.org/abs/2412.10721v3)
