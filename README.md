@@ -48,8 +48,6 @@ First, load the necessary libraries:
 ``` r
 library(GofPT1)
 library(glmnet) # Required for estimation
-#> Loading required package: Matrix
-#> Loaded glmnet 4.1-10
 library(MASS) # Required for matrix operations
 ```
 
@@ -132,7 +130,7 @@ output26 <- Gof_Pcvm_test(x, y, fam = "binomial")
 
 ## Examples from empirical section of [1] and [2]
 
-The source codes for the simulation studies and real data analyses corresponding to [1] and [2] are available in [[Code_PLS_test](https://github.com/Falongtan/Code_PLS_test)] and [[Code_Pcvm_test](https://github.com/Falongtan/Code_Pcvm_test)], respectively.
+The source codes for the simulation studies and real data analyses corresponding to [1] and [2] are available in [Code_PLS_test](https://github.com/Falongtan/Code_PLS_test) and [Code_Pcvm_test](https://github.com/Falongtan/Code_Pcvm_test), respectively.
 
 ## References
 
